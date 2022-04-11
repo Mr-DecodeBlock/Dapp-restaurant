@@ -1,13 +1,15 @@
 {
   "name": "restaurant",
   "version": "0.1.0",
+  "homepage": ".",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bootstrap": "^4.5.0",
+    "dotenv": "^10.0.0",
     "jquery": "^3.5.1",
     "jwt-decode": "^3.0.0",
     "moment": "^2.27.0",
@@ -17,6 +19,7 @@
     "react-moment": "^0.9.7",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
+    "skynet-js": "^3.0.2",
     "web3": "^1.2.11"
   },
   "scripts": {
@@ -41,7 +44,8 @@
     ]
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "^2.5.0",
+    "@openzeppelin/contracts": "^4.3.1",
+    "@truffle/hdwallet-provider": "^1.5.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1"
   }
