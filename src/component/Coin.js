@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
 
-import {EATOUTTOKEN_ABI, EATOUTTOKEN_ADDRESS} from '../config';
+import EatOutToken from '../abis/EatOutToken.json';
 import TextInput from './common/TextInput';
 import Spinner from './common/Spinner';
 
@@ -17,27 +17,49 @@ class Coin extends Component{
   }
 
   componentDidMount(){
+    this.loadWeb3();
     this.loadBlockchainData();
   }
 
+  async loadWeb3(){
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum);
+
+      await window.ethereum.enable();
+    }
+    else if (window.web3) {
+        window.web3 = new Web3(window.web3.currentProvider);
+    }
+    else{
+        window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!');
+    }
+  }
+
   async loadBlockchainData(){
-    const web3 = new Web3(Web3.givenProvider || "http://localhost:7545");
+    const web3 = window.web3;
 
     const accounts = await web3.eth.getAccounts();
     this.setState({ account: accounts[0]});
 
-    const eatOutToken = new web3.eth.Contract(EATOUTTOKEN_ABI, EATOUTTOKEN_ADDRESS);
-    this.setState({ eatOutToken });
+    const networkId = await web3.eth.net.getId();
+    const networkData = EatOutToken.networks[networkId];
 
-    const balance = await eatOutToken.methods.balanceOf(accounts[0]).call();
+    if(networkData){
+      const eatOutToken = new web3.eth.Contract(EatOutToken.abi, EatOutToken.networks[networkId].address);
+      this.setState({ eatOutToken });
 
-    this.setState({ balance });
+      const balance = await eatOutToken.methods.balanceOf(accounts[0]).call();
+      this.setState({ balance: web3.utils.fromWei(balance.toString(), 'Ether') });
+    }
+    else{
+      window.alert('Contract is not deployed to detected network')
+    }
   }
 
   onSubmit(){
     try{
       this.setState({ loading : true });
-      this.state.eatOutToken.methods.transfer(this.state.address, this.state.amount).send({ from: this.state.account })
+      this.state.eatOutToken.methods.transfer(this.state.address, window.web3.utils.toWei(this.state.amount, 'Ether')).send({ from: this.state.account })
         .once('receipt', (receipt) => {
           console.log(receipt);
           this.setState({

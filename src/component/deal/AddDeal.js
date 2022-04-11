@@ -1,27 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from "react-router";
 import { useHistory } from 'react-router-dom';
 
 import axios from '../../axios';
+import Alert from '../common/Alert';
 import TextInput from '../common/TextInput';
+import TextArea from '../common/TextArea';
 import Loading from '../common/Loading';
+import DefaultImage from '../../assets/noimage.png';
 
 const AddDeal = () => {
     const history = useHistory();
-    const { id } =  useParams();
+    const { id, dealid } =  useParams();
 
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
     const [description, setDescription] = useState('');
-    const [image, setImage] = useState('');
+    const [imageFile, setImageFile] = useState('');
     const [imageName, setImageName] = useState('Choose File');
     const [loading, setLoading] = useState(false);
+    const [preview, setPreview] = useState();
+    const [go] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        async function getDealInfo() {
+            try{
+                const { data } = await axios.get(`/deal/${id}/${dealid}`);
+
+                setName(data.data.name || '');
+                setPrice(data.data.price || '');
+                setDescription(data.data.description || '');
+            } catch(err){
+                console.error(err);
+            }
+        }
+        
+        if(dealid) getDealInfo();
+
+    }, [go, id, dealid]);
+
+    useEffect(() => {
+        if(!imageFile){
+            setPreview(undefined);
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(imageFile);
+        setPreview(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [imageFile]);
 
     const selectFile = e => {
-        if(e.target.files[0]){
-            setImage(e.target.files[0]);
-            setImageName(e.target.files[0].name);
+        if(!e.target.files || e.target.files.length === 0){
+            setImageFile(undefined);
+            return;
         }
+        setImageFile(e.target.files[0]);
+        setImageName(e.target.files[0].name);
     }
 
     const onSubmit = async () => {
@@ -32,13 +69,18 @@ const AddDeal = () => {
             formData.append('name', name);
             formData.append('price', price);
             formData.append('description', description);
-            formData.append('image', image);
+            formData.append('image', imageFile);
 
-            await axios.post(`/deal/${id}`, formData);
+            if(dealid){
+                await axios.put(`/deal/${id}/${dealid}`, formData);
+            } else{
+                await axios.post(`/deal/${id}`, formData);
+            }
 
             history.push(`/restaurant/${id}`);
 
         } catch(err){
+            setError("Invalid, try again");
             setLoading(false);
             console.error(err);
         }
@@ -46,7 +88,8 @@ const AddDeal = () => {
 
     return(
         <div className="container">
-            <h1 className="mt-2">Add Deal</h1>
+            { error && <Alert msg={error} /> }
+            <h1 className="mt-2">{dealid ? "Edit" : "Add"} Deal</h1>
 
             <div className="form-group">
                 <div className="row">
@@ -61,8 +104,8 @@ const AddDeal = () => {
                             type="number"
                             value={price}
                             onChange={e => setPrice(e.target.value)} />
-                        <TextInput
-                            label="description"
+                        <TextArea
+                            label="Description"
                             type="text"
                             value={description}
                             onChange={e => setDescription(e.target.value)} />
@@ -79,12 +122,13 @@ const AddDeal = () => {
                                 <label className="custom-file-label" htmlFor="inputGroupFile01">{imageName}</label>
                             </div>
                         </div>
+                        <img src={imageFile ? preview : DefaultImage} alt="Preview" />
                     </div>
                 </div>
                 
             </div>
 
-            {loading ? <Loading /> : <button className="btn btn-lg primary-color " onClick={onSubmit}>Create Deal</button> }
+            {loading ? <Loading /> : <button className="btn btn-lg primary-color " onClick={onSubmit}>{id ? "Update" : "Create Deal"}</button> }
         </div>
     )
 }

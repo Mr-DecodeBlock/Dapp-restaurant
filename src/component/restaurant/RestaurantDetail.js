@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams } from "react-router";
-import { Link } from 'react-router-dom';
+import Moment from 'react-moment';
 
 import axios from '../../axios';
 import DefaultImage from '../../assets/noimage.png';
@@ -15,9 +15,7 @@ const RestaurantDetail = () => {
         async function getRestaurants() {
             try{
                 const { data } = await axios.get('/restaurant/' + id);
-
-                console.log(data.data)
-    
+                
                 setData(data.data);
             } catch(err){
                 console.error(err);
@@ -25,19 +23,27 @@ const RestaurantDetail = () => {
         }
         
         getRestaurants();
-    }, [go]);
+    }, [go, id]);
 
     return(
         <div className="container">
-            <h1 className="text-center">{data.name}</h1>
-            <div className="row">
+            <div className="row mt-4">
                 <div className="col-12 col-md-6">
-                    <img style={{height: '400px'}} src={data.image} alt="Restaurant" />
+                    <img style={{height: '400px'}} src={data.image || DefaultImage} alt="Restaurant" />
                 </div>
                 <div className="col-12 col-md-6">
+                    <div className="d-flex align-items-center">
+                        <h1 className="mr-2">{data.name}</h1>
+                    </div>
                     <p>{data.location}</p>
+                    <p>{data.phoneNumber}</p>
+                    <p>{data.email}</p>
                     <p>{data.description}</p>
-                    <Link to={`/restaurant/${id}/adddeal`} className="btn primary-color">Add Deal</Link>
+                    <p className="card-text">
+                        <small className="text-muted">
+                            Post On <Moment format="MM/DD/YYYY">{data.date}</Moment>
+                        </small>
+                    </p>
                 </div>
             </div>
             <hr />
@@ -47,11 +53,16 @@ const RestaurantDetail = () => {
                         return(
                             <div className="col-12 col-md-6 col-lg-4" key={deal._id}>
                                 <div className="card mb-3">
-                                    <img className="card-img-top" src={deal.image || DefaultImage} alt="Deal" />
+                                    <img className="card-img-top card-img-height" src={deal.image || DefaultImage} alt="Deal" />
+                                    <span className="badge  badge-pill badge-info badge-price">${deal.price}</span>
                                     <div className="card-body">
                                         <h5 className="card-title">{deal.name}</h5>
-                                        <p className="card-text">{deal.price}</p>
                                         <p className="card-text">{deal.description}</p>
+                                        <p className="card-text">
+                                            <small className="text-muted">
+                                                Post On <Moment format="MM/DD/YYYY">{deal.date}</Moment>
+                                            </small>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
